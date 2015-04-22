@@ -1,0 +1,1 @@
+mvn compile && mvn exec:java -Dexec.mainClass="de.tuhh.vs.App" && pause
