@@ -179,7 +179,7 @@ public class Server implements AutoCloseable {
 		} catch (IOException e) {
 			throw new RuntimeException(e +": "+ e.getMessage(), e);
 		}
-		this.thread.interrupt();
+		if (this.thread != null) { this.thread.interrupt(); }
 		this.done.cancel(false);
 		this.thread =  null;
 	}

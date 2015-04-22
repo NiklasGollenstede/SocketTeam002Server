@@ -59,7 +59,7 @@ public class App
 			Booking klopse = new Booking("Klopse", 3.20);
 			klopse.setKey((int) one.insert(klopse).get());
 			
-			two.edit(klopse, new Booking(klopse.getKey(), "Mehr klopÃ¶Ã¶Ã¶", Double.MAX_VALUE)).get();
+			two.edit(klopse, new Booking(klopse.getKey(), "Mehr klopsööö", Double.MAX_VALUE)).get();
 			
 			Future<Object> fail = one.edit(klopse, new Booking(klopse.getKey(), "Keine Klopse", 0));
 			

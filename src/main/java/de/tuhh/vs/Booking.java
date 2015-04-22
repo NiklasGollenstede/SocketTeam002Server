@@ -23,7 +23,7 @@ public class Booking extends PersistentObject {
 	public Booking(int id, String purpose, double amount, long timestamp) {
 		this.id = id;
 		this.purpose = purpose;
-		while (this.purpose.length() % 4 != 0) {
+		while (this.purpose.getBytes().length % 8 != 0) {
 			this.purpose += " ";
 		}
 		this.amount = amount;
@@ -33,30 +33,28 @@ public class Booking extends PersistentObject {
 	// reads a Booking from the buffer at its position and increments it
 	public Booking(ByteBuffer buffer) throws ProtocolError {
 		this.id = buffer.getInt();
-		int length = buffer.getInt() * 4;
+		int length = buffer.getInt() * 8;
 		if (length < 0) {
 			throw new ProtocolError(MessageType.InvalidFieldLength);
 		}
-		this.purpose = "";
-		while (length-- > 0) {
-			this.purpose += buffer.getChar();
-		}
+		byte[] bytes = new byte[length];
+		buffer.get(bytes);
+		this.purpose = new String(bytes);
 		this.amount = buffer.getDouble();
 		this.timestamp = buffer.getLong();
 	}
 	
 	// returns the space this needs when wirten to a buffer
 	public int size() {
-		return 4 + 4 + (this.purpose.length() * 2) + 8 + 8;
+		return 4 + 4 + (this.purpose.getBytes().length) + 8 + 8;
 	}
 	
 	// writes a Booking to the buffer at its position and increments it
 	public void write(ByteBuffer buffer) {
 		buffer.putInt(this.id);
-		buffer.putInt(this.purpose.length() / 4);
-		for (char c : this.purpose.toCharArray()) {
-			buffer.putChar(c);
-		}
+		byte[] bytes = this.purpose.getBytes();
+		buffer.putInt((bytes.length) / 8);
+		buffer.put(bytes);
 		buffer.putDouble(this.amount);
 		buffer.putLong(this.timestamp);
 	}
