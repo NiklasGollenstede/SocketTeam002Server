@@ -52,13 +52,14 @@ public class Server implements AutoCloseable {
 			DataOutputStream out = new DataOutputStream(client.getOutputStream());
 		) {
 			byte version;
+			short messageId;
 			MessageType type;
 			ByteBuffer body;
 			do {
 				System.out.println("Server start read");
 				
 				version = in.readByte();
-				short messageId = in.readShort();
+				messageId = in.readShort();
 
 				// check protocol version
 				if (version != 0x01) {
@@ -78,8 +79,11 @@ public class Server implements AutoCloseable {
 				
 				// read body of correct length
 				try {
-					body = ByteBuffer.allocate((int) in.readLong());
-					in.read(body.array());
+					int length = (int) in.readLong();
+					body = ByteBuffer.allocate(lenght);
+					if (length != in.read(body.array())) {
+						trow new IllegalArgumentException();
+					}
 				} catch (IllegalArgumentException e) {
 					sendResponse(out, messageId, MessageType.InvalidBodyLength);
 					in.skip(Integer.MAX_VALUE);
@@ -99,6 +103,7 @@ public class Server implements AutoCloseable {
 							throw new RuntimeException("response haas already been sent");
 						}
 						this.sendResponse(out, messageId, message);
+						resolved.complete(null);
 					} catch (Exception e) {
 						System.out.println("Server failed to respond to packet "+ messageId +": "+ e.getMessage());
 					}
