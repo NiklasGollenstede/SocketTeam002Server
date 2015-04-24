@@ -23,30 +23,33 @@ public class App
 	
 	public static void main(String[] args) {
 		int port = 8080;
+		if (args.length > 0) {
+			port = Integer.parseInt(args[0]);
+		}
 		String databaseDirectory = ".\\target\\db";
 		try (
 			Server server = new Server(port, Handler.getHandler(databaseDirectory));
 		) {
-			System.out.println("Test server running, press Ctrl+C to quit");
+			System.out.println("Main server running, press Ctrl+C to quit");
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-				System.out.println("Test quit server");
+				System.out.println("Main quit server");
 				server.close();
 			}));
 			App.test(port);
 			server.softClose();
 			try {
 				server.block();
-				System.out.println("Test server terminated normally");
+				System.out.println("Main server terminated normally");
 			} catch (Exception e) {
-				System.out.println("Test server terminated unexpected: "+ e +", "+ e.getMessage());
+				System.out.println("Main server terminated unexpected: "+ e.getClass() +", "+ e.getMessage());
 			}
 		} catch (Throwable e) {
-			System.out.println("Test ailed to start server: "+ e +", "+ e.getMessage());
+			System.out.println("Main failed to start server: "+ e.getClass() +", "+ e.getMessage());
 		}
-		System.out.println("Test quit application");
+		System.out.println("Main quit application");
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked" })
 	private static void test(int port) throws Exception {
 		try (
 			Client one = new Client(port);

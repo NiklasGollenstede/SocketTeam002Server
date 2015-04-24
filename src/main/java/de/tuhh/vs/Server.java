@@ -52,14 +52,13 @@ public class Server implements AutoCloseable {
 			DataOutputStream out = new DataOutputStream(client.getOutputStream());
 		) {
 			byte version;
-			short messageId;
 			MessageType type;
 			ByteBuffer body;
 			do {
 				System.out.println("Server start read");
 				
 				version = in.readByte();
-				messageId = in.readShort();
+				final short messageId = in.readShort();
 
 				// check protocol version
 				if (version != 0x01) {
@@ -80,9 +79,9 @@ public class Server implements AutoCloseable {
 				// read body of correct length
 				try {
 					int length = (int) in.readLong();
-					body = ByteBuffer.allocate(lenght);
+					body = ByteBuffer.allocate(length);
 					if (length != in.read(body.array())) {
-						trow new IllegalArgumentException();
+						throw new IllegalArgumentException();
 					}
 				} catch (IllegalArgumentException e) {
 					sendResponse(out, messageId, MessageType.InvalidBodyLength);
@@ -100,7 +99,7 @@ public class Server implements AutoCloseable {
 				this.handler.accept(new Message(type, body), (Message message) -> {
 					try {
 						if (resolved.isDone()) {
-							throw new RuntimeException("response haas already been sent");
+							throw new RuntimeException("response has already been sent");
 						}
 						this.sendResponse(out, messageId, message);
 						resolved.complete(null);
@@ -139,7 +138,7 @@ public class Server implements AutoCloseable {
 						} catch (Exception e) {
 							e.printStackTrace();
 						} finally {
-							System.out.println("Server client connection closed");
+							System.out.println("Server client disconnedted");
 							this.clients.remove(client);
 						}
 					});
@@ -196,5 +195,31 @@ public class Server implements AutoCloseable {
 		} catch (CancellationException | ExecutionException e) {
 			return;
 		}
+	}
+	
+	public static void main(String[] args) {
+		int port = 8080;
+		if (args.length > 0) {
+			port = Integer.parseInt(args[0]);
+		}
+		String databaseDirectory = ".\\target\\db";
+		try (
+			Server server = new Server(port, Handler.getHandler(databaseDirectory));
+		) {
+			System.out.println("Server running, press Ctrl+C to quit");
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+				System.out.println("Main quit server");
+				server.close();
+			}));
+			try {
+				server.block();
+				System.out.println("Server terminated normally");
+			} catch (Exception e) {
+				System.out.println("Server terminated unexpected: "+ e.getClass() +", "+ e.getMessage());
+			}
+		} catch (Throwable e) {
+			System.out.println("Server failed to start: "+ e.getClass() +", "+ e.getMessage());
+		}
+		System.out.println("Server quit application");
 	}
 }
