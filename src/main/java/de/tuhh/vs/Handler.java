@@ -40,6 +40,7 @@ public abstract class Handler {
 						int length =  0;
 						for (Booking booking : db) { length += booking.size(); }
 						ByteBuffer buffer = ByteBuffer.allocate(length);
+						buffer.order(Message.byteOrder);
 						for (Booking booking : db) { booking.write(buffer); }
 						String print = ("Server [\n");
 							for (Booking booking : db) { print += ("\t"+ booking +",\n"); }
@@ -50,6 +51,7 @@ public abstract class Handler {
 						Booking booking = new Booking(request.body);
 						db.insert(booking);
 						ByteBuffer buffer = ByteBuffer.allocate(4);
+						buffer.order(Message.byteOrder);
 						buffer.putInt(booking.getKey());
 						System.out.println("Server inserted "+ booking);
 						response.accept(new Message(MessageType.ResolveInsert, buffer));
@@ -67,8 +69,10 @@ public abstract class Handler {
 					case CallEdit: {
 						Booking old = new Booking(request.body);
 						Booking now = new Booking(request.body);
-						Booking current = db.get(old.getKey());
-						if (old == null || now == null || old.getKey() != now.getKey()) {
+						Booking current;
+						if (old == null || now == null || old.getKey() != now.getKey()
+							|| (current = db.get(old.getKey())) == null
+						) {
 							response.accept(new Message(MessageType.ErrorChangeIdMismatch, null));
 						} else if (!old.equals(current)) {
 							response.accept(new Message(MessageType.ErrorChangeEntyChanged, null));

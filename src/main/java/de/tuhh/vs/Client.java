@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.Vector;
 
 
+
+
+
 import de.tuhh.vs.Message;
 import de.tuhh.vs.Message.ProtocolError;
 import de.tuhh.vs.Message.MessageType;
@@ -38,26 +41,41 @@ public class Client implements AutoCloseable {
 				ByteBuffer body;
 				do {
 					System.out.println("Client start read");
+
+					ByteBuffer header = ByteBuffer.allocate(Message.LEN_HEADER);
+					header.order(Message.byteOrder);
 					
-					version = in.readByte();//.get();
-					short messageId = in.readShort();
+					
+					for (
+						int read = 0;
+						read < Message.LEN_HEADER;
+						read += in.read(header.array(), read, Message.LEN_HEADER - read)
+					) {
+						if (read < 0) {
+							throw new Exception("Unable to read header");
+						}
+					}
+					
+					version = header.get();
+					short messageId = header.getShort();
 					
 					try {
 						// check protocol version
-						if (version != 0x01) {
-							throw new Exception("Version is not 0x01");
+						if (version != Message.version) {
+							throw new Exception("Version is not Message.version");
 						}
 		
 						// parse packet type
 						try {
-							type = MessageType.from(in.readByte());
+							type = MessageType.from(header.get());
 						} catch (IllegalArgumentException e) {
 							throw new Exception("Recived packet of invalid type");
 						}
 						
 						// read body of correct length
 						try {
-							body = ByteBuffer.allocate((int) in.readLong());
+							body = ByteBuffer.allocate((int) header.getLong());
+							body.order(Message.byteOrder);
 							in.read(body.array());
 						} catch (IllegalArgumentException e) {
 							throw new Exception("Recived packet of invalid length");
@@ -90,7 +108,7 @@ public class Client implements AutoCloseable {
 								this.futures.get(messageId).completeExceptionally(new ProtocolError(type));
 							} break;
 							default: {
-								throw new Exception("Recived packet of unexpedted type "+ type.get());
+								throw new Exception("Recived packet of unexpedted type "+ type);
 							}
 						}
 					} catch (Throwable e) {
@@ -138,14 +156,17 @@ public class Client implements AutoCloseable {
 		assert(resquest.body == null || resquest.body.limit() == resquest.body.array().length);
 		int length = resquest.body != null ? resquest.body.limit() : 0;
 		System.out.println("Client requests "+ messageId +": "+ resquest.type +":\n"+
-				(length != 0 ? "\t("+ length +")"+ App.bytesToHex(resquest.body.array()) : "<no body>"));
-		this.out.write(0x01);
-		this.out.writeShort(messageId);
-		this.out.write(resquest.type.get());
-		this.out.writeLong(resquest.body != null ? resquest.body.limit() : 0);
+				(length != 0 ? "\t("+ length +")"+ App.bytesToHex(resquest.body.array()) : "\t<no body>"));
+		ByteBuffer buffer = ByteBuffer.allocate(length + Message.LEN_HEADER);
+		buffer.order(Message.byteOrder);
+		buffer.put((byte) Message.version);
+		buffer.putShort(messageId);
+		buffer.put(resquest.type.get());
+		buffer.putLong(length);
 		if (resquest.body != null) {
-			this.out.write(resquest.body.array());
+			buffer.put(resquest.body.array());
 		}
+		this.out.write(buffer.array());
 	}
 	
 	public CompletableFuture<Object> getAll() throws IOException {
@@ -161,6 +182,7 @@ public class Client implements AutoCloseable {
 		CompletableFuture<Object> future = new CompletableFuture<Object>();
 		this.futures.put(messageId, future);
 		ByteBuffer buffer = ByteBuffer.allocate(booking.size());
+		buffer.order(Message.byteOrder);
 		booking.write(buffer);
 		this.sendMessage(messageId, new Message(MessageType.CallInsert, buffer));
 		return future;
@@ -171,6 +193,7 @@ public class Client implements AutoCloseable {
 		CompletableFuture<Object> future = new CompletableFuture<Object>();
 		this.futures.put(messageId, future);
 		ByteBuffer buffer = ByteBuffer.allocate(booking.size());
+		buffer.order(Message.byteOrder);
 		booking.write(buffer);
 		this.sendMessage(messageId, new Message(MessageType.CallDelete, buffer));
 		return future;
@@ -181,6 +204,7 @@ public class Client implements AutoCloseable {
 		CompletableFuture<Object> future = new CompletableFuture<Object>();
 		this.futures.put(messageId, future);
 		ByteBuffer buffer = ByteBuffer.allocate(old.size() + now.size());
+		buffer.order(Message.byteOrder);
 		old.write(buffer);
 		now.write(buffer);
 		this.sendMessage(messageId, new Message(MessageType.CallEdit, buffer));

@@ -1,11 +1,14 @@
 package de.tuhh.vs;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 
 public class Message {
 
 	public final static byte LEN_HEADER = 12;
+	public final static byte version = 0x01 - 128;
+	public static final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
 	
 	public MessageType type;
 	public ByteBuffer body = null;

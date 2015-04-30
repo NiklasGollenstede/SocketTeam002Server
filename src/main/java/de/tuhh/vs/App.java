@@ -22,7 +22,7 @@ public class App
 	
 	
 	public static void main(String[] args) {
-		int port = 8080;
+		int port = 8080+10;
 		if (args.length > 0) {
 			port = Integer.parseInt(args[0]);
 		}
@@ -42,9 +42,11 @@ public class App
 				System.out.println("Main server terminated normally");
 			} catch (Exception e) {
 				System.out.println("Main server terminated unexpected: "+ e.getClass() +", "+ e.getMessage());
+				e.printStackTrace();
 			}
 		} catch (Throwable e) {
 			System.out.println("Main failed to start server: "+ e.getClass() +", "+ e.getMessage());
+			e.printStackTrace();
 		}
 		System.out.println("Main quit application");
 	}
@@ -61,6 +63,8 @@ public class App
 			
 			Booking klopse = new Booking("Klopse", 3.20);
 			klopse.setKey((int) one.insert(klopse).get());
+			//System.exit(0);
+			System.out.println("Klopse: "+ klopse);
 			
 			two.edit(klopse, new Booking(klopse.getKey(), "Mehr klopsööö", Double.MAX_VALUE)).get();
 			

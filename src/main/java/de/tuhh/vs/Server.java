@@ -30,9 +30,10 @@ public class Server implements AutoCloseable {
 	private void sendResponse(DataOutputStream out, short messageId, Message response) throws IOException {
 		int length = response.body != null ? response.body.limit() : 0;
 		System.out.println("Server responding "+ messageId +": "+ response.type +":\n"+
-				(length != 0 ? "\t("+ length +")"+ App.bytesToHex(response.body.array()) : "<no body>"));
+				(length != 0 ? "\t("+ length +")"+ App.bytesToHex(response.body.array()) : "\t<no body>"));
 		ByteBuffer buffer = ByteBuffer.allocate(length + Message.LEN_HEADER);
-		buffer.put((byte) 0x01);
+		buffer.order(Message.byteOrder);
+		buffer.put((byte) Message.version);
 		buffer.putShort(messageId);
 		buffer.put(response.type.get());
 		buffer.putLong(length);
@@ -56,12 +57,27 @@ public class Server implements AutoCloseable {
 			ByteBuffer body;
 			do {
 				System.out.println("Server start read");
+
+				// read header
+				ByteBuffer header = ByteBuffer.allocate(Message.LEN_HEADER);
+				header.order(Message.byteOrder);
+				for (
+					int read = 0;
+					read < Message.LEN_HEADER;
+					read += in.read(header.array(), read, Message.LEN_HEADER - read)
+				) {
+					if (read < 0) {
+						sendResponse(out, (short) 0, MessageType.InvalidPacketId);
+						in.skip(Integer.MAX_VALUE);
+						continue;
+					}
+				}
 				
-				version = in.readByte();
-				final short messageId = in.readShort();
+				version = header.get();
+				final short messageId = header.getShort();
 
 				// check protocol version
-				if (version != 0x01) {
+				if (version != Message.version) {
 					sendResponse(out, messageId, MessageType.InvalidProtocolVersion);
 					in.skip(Integer.MAX_VALUE);
 					continue;
@@ -69,7 +85,7 @@ public class Server implements AutoCloseable {
 
 				// parse packet type
 				try {
-					type = MessageType.from(in.readByte());
+					type = MessageType.from(header.get());
 				} catch (IllegalArgumentException e) {
 					sendResponse(out, messageId, MessageType.InvalidPacketType);
 					in.skip(Integer.MAX_VALUE);
@@ -78,8 +94,9 @@ public class Server implements AutoCloseable {
 				
 				// read body of correct length
 				try {
-					int length = (int) in.readLong();
+					int length = (int) header.getLong();
 					body = ByteBuffer.allocate(length);
+					body.order(Message.byteOrder);
 					if (length != in.read(body.array())) {
 						throw new IllegalArgumentException();
 					}
@@ -197,7 +214,7 @@ public class Server implements AutoCloseable {
 		}
 	}
 	
-	public static void main(String[] args) {
+	public static void notmain(String[] args) {
 		int port = 8080;
 		if (args.length > 0) {
 			port = Integer.parseInt(args[0]);
