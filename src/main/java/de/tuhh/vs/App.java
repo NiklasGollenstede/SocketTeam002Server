@@ -22,30 +22,36 @@ public class App
 	
 	
 	public static void main(String[] args) {
-		int port = 8080+10;
-		if (args.length > 0) {
-			port = Integer.parseInt(args[0]);
-		}
-		String databaseDirectory = ".\\target\\db";
-		try (
-			Server server = new Server(port, Handler.getHandler(databaseDirectory));
-		) {
-			System.out.println("Main server running, press Ctrl+C to quit");
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-				System.out.println("Main quit server");
-				server.close();
-			}));
-			App.test(port);
-			server.softClose();
-			try {
-				server.block();
-				System.out.println("Main server terminated normally");
-			} catch (Exception e) {
-				System.out.println("Main server terminated unexpected: "+ e.getClass() +", "+ e.getMessage());
-				e.printStackTrace();
-			}
-		} catch (Throwable e) {
-			System.out.println("Main failed to start server: "+ e.getClass() +", "+ e.getMessage());
+//		int port = 8080;
+//		if (args.length > 0) {
+//			port = Integer.parseInt(args[0]);
+//		}
+//		String databaseDirectory = ".\\target\\db";
+//		try (
+//			Server server = new Server(port, Handler.getHandler(databaseDirectory));
+//		) {
+//			System.out.println("Main server running, press Ctrl+C to quit");
+//			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+//				System.out.println("Main quit server");
+//				server.close();
+//			}));
+//			App.test(port);
+//			server.softClose();
+//			try {
+//				server.block();
+//				System.out.println("Main server terminated normally");
+//			} catch (Exception e) {
+//				System.out.println("Main server terminated unexpected: "+ e.getClass() +", "+ e.getMessage());
+//				e.printStackTrace();
+//			}
+//		} catch (Throwable e) {
+//			System.out.println("Main failed to start server: "+ e.getClass() +", "+ e.getMessage());
+//			e.printStackTrace();
+//		}
+		try {
+			App.test(8080);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.out.println("Main quit application");

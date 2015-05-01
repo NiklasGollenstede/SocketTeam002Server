@@ -42,14 +42,14 @@ public class Client implements AutoCloseable {
 				do {
 					System.out.println("Client start read");
 
-					ByteBuffer header = ByteBuffer.allocate(Message.LEN_HEADER);
+					ByteBuffer header = ByteBuffer.allocate(Message.headerLength);
 					header.order(Message.byteOrder);
 					
 					
 					for (
 						int read = 0;
-						read < Message.LEN_HEADER;
-						read += in.read(header.array(), read, Message.LEN_HEADER - read)
+						read < Message.headerLength;
+						read += in.read(header.array(), read, Message.headerLength - read)
 					) {
 						if (read < 0) {
 							throw new Exception("Unable to read header");
@@ -157,7 +157,7 @@ public class Client implements AutoCloseable {
 		int length = resquest.body != null ? resquest.body.limit() : 0;
 		System.out.println("Client requests "+ messageId +": "+ resquest.type +":\n"+
 				(length != 0 ? "\t("+ length +")"+ App.bytesToHex(resquest.body.array()) : "\t<no body>"));
-		ByteBuffer buffer = ByteBuffer.allocate(length + Message.LEN_HEADER);
+		ByteBuffer buffer = ByteBuffer.allocate(length + Message.headerLength);
 		buffer.order(Message.byteOrder);
 		buffer.put((byte) Message.version);
 		buffer.putShort(messageId);

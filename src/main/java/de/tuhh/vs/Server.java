@@ -31,7 +31,7 @@ public class Server implements AutoCloseable {
 		int length = response.body != null ? response.body.limit() : 0;
 		System.out.println("Server responding "+ messageId +": "+ response.type +":\n"+
 				(length != 0 ? "\t("+ length +")"+ App.bytesToHex(response.body.array()) : "\t<no body>"));
-		ByteBuffer buffer = ByteBuffer.allocate(length + Message.LEN_HEADER);
+		ByteBuffer buffer = ByteBuffer.allocate(length + Message.headerLength);
 		buffer.order(Message.byteOrder);
 		buffer.put((byte) Message.version);
 		buffer.putShort(messageId);
@@ -59,17 +59,19 @@ public class Server implements AutoCloseable {
 				System.out.println("Server start read");
 
 				// read header
-				ByteBuffer header = ByteBuffer.allocate(Message.LEN_HEADER);
+				ByteBuffer header = ByteBuffer.allocate(Message.headerLength);
 				header.order(Message.byteOrder);
 				for (
 					int read = 0;
-					read < Message.LEN_HEADER;
-					read += in.read(header.array(), read, Message.LEN_HEADER - read)
+					read < Message.headerLength;
+					read += in.read(header.array(), read, Message.headerLength - read)
 				) {
 					if (read < 0) {
-						sendResponse(out, (short) 0, MessageType.InvalidPacketId);
-						in.skip(Integer.MAX_VALUE);
-						continue;
+//						sendResponse(out, (short) 0, MessageType.InvalidPacketId);
+//						in.skip(Integer.MAX_VALUE);
+//						continue;
+						System.out.println("Server unable to read header, closing connection");
+						return;
 					}
 				}
 				
@@ -214,12 +216,12 @@ public class Server implements AutoCloseable {
 		}
 	}
 	
-	public static void notmain(String[] args) {
+	public static void main(String[] args) {
 		int port = 8080;
 		if (args.length > 0) {
 			port = Integer.parseInt(args[0]);
 		}
-		String databaseDirectory = ".\\target\\db";
+		String databaseDirectory = ".\\db";
 		try (
 			Server server = new Server(port, Handler.getHandler(databaseDirectory));
 		) {
