@@ -68,9 +68,6 @@ public class Server implements AutoCloseable {
 					read += in.read(header.array(), read, Message.headerLength - read)
 				) {
 					if (read < 0) {
-//						sendResponse(out, (short) 0, MessageType.InvalidPacketId);
-//						in.skip(Integer.MAX_VALUE);
-//						continue;
 						System.out.println("Server unable to read header, closing connection");
 						return;
 					}
@@ -167,6 +164,7 @@ public class Server implements AutoCloseable {
 				} while (!Thread.currentThread().isInterrupted());
 			} catch (Exception e) {
 				this.done.complete(e);
+				wait.completeExceptionally(e);
 				this.close();
 			} finally {
 				this.socket = null;
@@ -181,7 +179,7 @@ public class Server implements AutoCloseable {
 		} catch (ExecutionException e) { }
 	}
 	
-	// closes the server and interupts all associates threads
+	// closes the server and interrupts all associates threads
 	public void close() {
 		if (this.thread == null) { return; }
 		this.softClose();
