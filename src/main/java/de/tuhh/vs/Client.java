@@ -8,13 +8,11 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
-
-
-
-
 
 import de.tuhh.vs.Message;
 import de.tuhh.vs.Message.ProtocolError;
@@ -209,5 +207,56 @@ public class Client implements AutoCloseable {
 		now.write(buffer);
 		this.sendMessage(messageId, new Message(MessageType.CallEdit, buffer));
 		return future;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args) {
+		int port = 8080;
+		try (
+			Client one = new Client(port);
+			Client two = new Client(port);
+		) {
+			
+			one.insert(new Booking("Toast", 0.70));
+			two.insert(new Booking("Butter", 0.70));
+			
+			Booking klopse = new Booking("Klopse", 3.20);
+			klopse.setKey((int) one.insert(klopse).get());
+			//System.exit(0);
+			System.out.println("Klopse: "+ klopse);
+			
+			two.edit(klopse, new Booking(klopse.getKey(), "Mehr klopsööö", Double.MAX_VALUE)).get();
+			
+			Future<Object> fail = one.edit(klopse, new Booking(klopse.getKey(), "Keine Klopse", 0));
+			
+			try {
+				fail.get();
+			} catch (ExecutionException e) {
+				System.out.println("Test successfully didn't change: "+
+						((ProtocolError) e.getCause()).messageType.name());
+			}
+			
+			String print = "Test Bookings [\n";
+			for (Booking booking : (Vector<Booking>) one.getAll().get()) {
+				print += ("\t"+ booking +",\n");
+			}
+			System.out.println(print +"]");
+			
+
+			for (Booking booking : (Vector<Booking>) two.getAll().get()) {
+				two.delete(booking);
+			}
+			
+			print = "Test Bookings [\n";
+			for (Booking booking : (Vector<Booking>) two.getAll().get()) {
+				print += ("\t"+ booking +",\n");
+			}
+			System.out.println(print +"]");
+			
+			System.out.println("Test database cleared");
+		} catch (Exception e) {
+			System.out.println("Test threw: "+ e.getMessage());
+			e.printStackTrace();
+		}
 	}
 }
