@@ -42,7 +42,7 @@ public abstract class Handler {
 						ByteBuffer buffer = ByteBuffer.allocate(length);
 						buffer.order(Message.byteOrder);
 						for (Booking booking : db) { booking.write(buffer); }
-						String print = ("Server [\n");
+						String print = ("Server bookings: [\n");
 							for (Booking booking : db) { print += ("\t"+ booking +",\n"); }
 						System.out.println(print +"]");
 						response.accept(new Message(MessageType.ResolveGetAll, buffer));

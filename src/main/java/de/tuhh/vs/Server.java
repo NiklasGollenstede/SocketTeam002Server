@@ -6,6 +6,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.Vector;
 import java.util.concurrent.CancellationException;
@@ -153,7 +154,7 @@ public class Server implements AutoCloseable {
 						System.out.println("Server client connected");
 						try {
 							this.handleClient(client);
-						} catch (EOFException e) {
+						} catch (EOFException | SocketException e) {
 						} catch (Exception e) {
 							e.printStackTrace();
 						} finally {
