@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import de.tuhh.vs.Message;
 import de.tuhh.vs.Message.MessageType;
 
 public class Server implements AutoCloseable {

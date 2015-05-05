@@ -18,14 +18,40 @@ public class Booking extends PersistentObject {
 	private double amount;
 	private long timestamp;
 
+	/**
+	 * Booking-Constructor
+	 * Creates a new Booking-Object given a certain purpose and amount.
+	 * The id is set to 0 and the timestamp to the current time
+	 * 
+	 * @param purpose	The purpose of the booking on form of a string
+	 * @param amount	The amount of the booking(so the costs)
+	 */
 	public Booking(String purpose, double amount) {
 		this(0, purpose, amount, System.currentTimeMillis());
 	}
 
+	/**
+	 * Booking-Constructor
+	 * Creates a new Booking-Object given a certain id, purpose and amount.
+	 * The timestamp is set to the current time
+	 * 
+	 * @param i			The id of the booking
+	 * @param purpose	The purpose of the booking on form of a string
+	 * @param amount	The amount of the booking(so the costs)
+	 */
 	public Booking(int i, String purpose, double amount) {
 		this(i, purpose, amount, System.currentTimeMillis());
 	}
 
+	/**
+	 * Booking-Constructor
+	 * Creates a new Booking-Object given a certain id, purpose, amount and timestamp
+	 * 
+	 * @param id		The id of the booking
+	 * @param purpose	The purpose of the booking on form of a string
+	 * @param amount	The amount of the booking(so the costs)
+	 * @param timestamp	The timestamp of the booking(time where it is made)
+	 */
 	public Booking(int id, String purpose, double amount, long timestamp) {
 		this.id = id;
 		byte[] chars = purpose.getBytes(charset);
@@ -36,7 +62,12 @@ public class Booking extends PersistentObject {
 		this.timestamp = timestamp;
 	}
 
-	// reads a Booking from the buffer at its position and increments it
+	/**
+	 * Reads a booking from the a byte-buffer at the current position of the buffer 
+	 * and also increments the buffers position
+	 * @param	buffer			The byte-buffer from which to read 
+	 * @throws	ProtocolError	Exception thrown in case of invalid length for the body(only positive values allowed)
+	 */
 	public Booking(ByteBuffer buffer) throws ProtocolError {
 		this.id = buffer.getInt();
 		int length = buffer.getInt() * 8;
@@ -49,12 +80,19 @@ public class Booking extends PersistentObject {
 		this.timestamp = buffer.getLong();
 	}
 
-	// returns the space this needs when written to a buffer
+	/**
+	 * Returns the size of this booking needed to write to the byte-buffer(in bytes)
+	 * @return	The size of the booking in bytes when sending to the byte-buffer
+	 */
 	public int size() {
 		return 4 + 4 + (this.purpose.length) + 8 + 8;
 	}
 
-	// writes a Booking to the buffer at its position and increments it
+	/**
+	 * Writes a booking into the byte-buffer at the current position of the buffer
+	 * and also increments the buffer position
+	 * @param	buffer	The byte-buffer to which to write
+	 */
 	public void write(ByteBuffer buffer) {
 		buffer.putInt(this.id);
 		buffer.putInt((this.purpose.length) / 8);
@@ -64,6 +102,12 @@ public class Booking extends PersistentObject {
 	}
 
 	// ^= (this, that) -> Booking[@@members].every(member -> this[member].equals(that[member]))
+	/**
+	 * Checks whether this booking equals another passed booking in the sense
+	 * of having the same 'id', 'purpose', 'amount' and 'timestamp'
+	 * @param	that	The booking against which to check equality
+	 * @return			A boolean whether this booking equals that passed one
+	 */
 	public boolean equals(Booking that) {
 		return this.id == that.id
 			&& Arrays.equals(this.purpose, that.purpose)
@@ -72,9 +116,23 @@ public class Booking extends PersistentObject {
 	}
 
 	// PersistentObject
+	/**
+	 * Sets the booking-id to the passed value
+	 * @param	key		The new value for the id
+	 */
 	public void setKey(final int key) { this.id = key; }
+	
+	/**
+	 * Returns the id of the booking
+	 * @return	The id of the booking
+	 */
 	public int getKey() { return id; }
 
+	/**
+	 * Returns a string which contains the information of the booking
+	 * @return	A string representation of the booking
+	 */
+	@Override
 	public String toString() {
 		return "Booking{ "
 				+"id: "+ this.id +", "

@@ -7,16 +7,17 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
-import de.tuhh.vs.Message;
-import de.tuhh.vs.Message.ProtocolError;
 import de.tuhh.vs.Message.MessageType;
+import de.tuhh.vs.Message.ProtocolError;
+
+
 
 public class Client implements AutoCloseable {
 	
