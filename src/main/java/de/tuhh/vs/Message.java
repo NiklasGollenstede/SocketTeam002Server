@@ -3,7 +3,6 @@ package de.tuhh.vs;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-
 public class Message {
 
 	public final static byte headerLength = 12;
@@ -13,10 +12,21 @@ public class Message {
 	public MessageType type;
 	public ByteBuffer body = null;
 	
+	/**
+	 * Message Constructor
+	 * Creates a message by type and message body
+	 * @param	type	The message type
+	 * @param	body	The actual message(message body)
+	 */
 	Message(MessageType type, ByteBuffer body) {
 		this.type = type;
 		this.body = body;
 	}
+	/**
+	 * Message Constructor
+	 * Creates a message from an Exception
+	 * @param e
+	 */
 	Message(Throwable e) {
 		this.type = MessageType.ErrorCustom;
 		if (e.getMessage() != null) {
@@ -29,7 +39,9 @@ public class Message {
 	}
 	
 	
-	
+	/**
+	 * All the valid MessageTypes
+	 */
 	public enum MessageType {
 		ErrorCustom(0x40), // Es ist ein anderer Fehler aufgetreten. Body enthält Fehler-Details als String.
 		InvalidProtocolVersion(0x41), // Fehler: Ungültige/nicht unterstützte Protokoll-Version
@@ -53,11 +65,25 @@ public class Message {
 
 		private byte self;
 		
+		/**
+		 * MessageType Constructor
+		 * Creates a message with the given message id
+		 * @param	it	The message id
+		 */
 		MessageType(int it) { this.self = (byte) it; }
 		
+		/**
+		 * Returns the message id
+		 * @return	self	The message id
+		 */
 		public byte get() { return self; }
 		
-		// returns the MessageType whos .get() returns 'it'
+		/**
+		 * Returns the MessageType whos .get() method returns the value 'it'
+		 * @param	it	The message id of the wanted MessageType
+		 * @return		The wanted MessageType
+		 * @throws	IllegalArgumentException	Thrown for invalid message id
+		 */
 		public static MessageType from(byte it) throws IllegalArgumentException {
 			for (MessageType item : MessageType.values()) {
 				if (item.self == it) { return item; }
@@ -65,14 +91,26 @@ public class Message {
 			throw new IllegalArgumentException("Invalid message id: "+ it);
 		}
 		
+		/**
+		 * Returns a string representation of the MessageType
+		 * @return	The string representing the MessageType
+		 */
+		@Override
 		public String toString() {
 			return this.name() +"("+ App.bytesToHex(new byte[]{(byte) (this.self + 128)}) +")";
 		}
 	}
 	
+	/**
+	 * This calss embodying the exception of an ProtocolError(in case of invalid lengths)
+	 */
 	public static class ProtocolError extends RuntimeException {
 		private static final long serialVersionUID = -7760110185107595555L;
 		public MessageType messageType;
+		/**
+		 * ProtocolError Constructor 
+		 * @param	type	The exception message
+		 */
 		ProtocolError(MessageType type) {
 			super();
 			this.messageType = type;

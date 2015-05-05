@@ -26,7 +26,15 @@ public class Server implements AutoCloseable {
 	private Vector<Socket> clients;
 	
 	
-	// constructs a message packet and writes it to 'out'
+	/**
+	 * Constructs a message packet with the passed message-id and response
+	 * and writes it to the passed outputstream
+	 * 
+	 * @param	out			The outputstream into which to write the message 
+	 * @param	messageId	The id of the message to write
+	 * @param	response	The response-message itself
+	 * @throws	IOException	Thrown if an I/O error occurs(while writing to the outputstream)
+	 */
 	private void sendResponse(DataOutputStream out, short messageId, Message response) throws IOException {
 		int length = response.body != null ? response.body.limit() : 0;
 		System.out.println("Server responding "+ messageId +": "+ response.type +":\n"+
@@ -42,12 +50,25 @@ public class Server implements AutoCloseable {
 		}
 		out.write(buffer.array());
 	}
+	/**
+	 * Constructs a message packet using the passed message-id and message type, but with empty body
+	 * Afterwards it writes it to the passed outputstream
+	 * 
+	 * @param	out			The outputstream into which to write the message 
+	 * @param	messageId	The id of the message to write
+	 * @param	type		The message type
+	 * @throws	IOException	Thrown if an I/O error occurs(while writing to the outputstream)
+	 */
 	private void sendResponse(DataOutputStream out, short messageId, MessageType type) throws IOException {
 		sendResponse(out, messageId, new Message(type, null));
 	}
 	
-	// handles the communication with a client synchronously
-	private void handleClient(Socket client) throws Exception {
+	/**
+	 * Handles the communication with a client synchronously
+	 * @param	client		The client that has to be handled
+	 * @throws	IOException	Thrown if an I/O error occurs(while creating the data-input- and data-output-stream)
+	 */
+	private void handleClient(Socket client) throws IOException {
 		try (
 			DataInputStream in = new DataInputStream(client.getInputStream());
 			DataOutputStream out = new DataOutputStream(client.getOutputStream());
@@ -130,9 +151,16 @@ public class Server implements AutoCloseable {
 		}
 	}
 	
-	// constructs a server that asynchronously accepts connections to 'port'
-	// and passes the type and body of each incoming message to the handler function,
-	// which can then invoke its second argument with its response Message
+	/**
+	 * Server Constructor
+	 * Creates a server that asynchronously accepts connections to 'port'
+	 * and passes the type and body of each incoming message to the handler function,
+	 * which can then invoke its second argument with its response Message
+	 * @param	port	The port to which the server listens
+	 * @param	handler	function which will be called for each incoming message with the message and a response handler as arguments.
+	 * 					The response handler can be used once to respond to this message
+	 * @throws	InterruptedException	Thrown if an Exception occurs while constructing the server
+	 */
 	public Server(int port, BiConsumer<Message, Consumer<Message>> handler) throws InterruptedException {
 		this.handler = handler;
 		this.done = new CompletableFuture<Exception>();
@@ -178,7 +206,10 @@ public class Server implements AutoCloseable {
 		} catch (ExecutionException e) { }
 	}
 	
-	// closes the server and interrupts all associates threads
+	// 
+	/**
+	 * Closes the server and interrupts all associates threads
+	 */
 	public void close() {
 		if (this.thread == null) { return; }
 		this.softClose();
@@ -191,7 +222,9 @@ public class Server implements AutoCloseable {
 		}
 	}
 	
-	// closes only the server thread and keeps the client connections alive
+	/**
+	 * Closes only the server thread and keeps the client connections alive
+	 */
 	public void softClose() {
 		if (this.thread == null) { return; }
 		System.out.println("Server interrupt");
@@ -205,7 +238,10 @@ public class Server implements AutoCloseable {
 		this.thread =  null;
 	}
 	
-	// blocks until the server thread is done, throws any exceptions the server thread did
+	/**
+	 * Blocks until the server thread is done and then throws any exceptions which the server thread caused
+	 * @throws	Exception	Thrown if the server thread threw
+	 */
 	public void block() throws Exception {
 		try {
 			throw this.done.get();
@@ -214,6 +250,10 @@ public class Server implements AutoCloseable {
 		}
 	}
 	
+	/**
+	 * The main methods to start the server
+	 * @param	args	Optional port number
+	 */
 	public static void main(String[] args) {
 		int port = 8080;
 		if (args.length > 0) {

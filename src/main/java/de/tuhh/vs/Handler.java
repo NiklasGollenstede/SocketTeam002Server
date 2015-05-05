@@ -4,19 +4,27 @@ import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import de.tuhh.vs.Message;
 import de.tuhh.vs.Message.MessageType;
 import de.tuhh.vs.Message.ProtocolError;
 import de.tuhh.vs.samples.common.db.DBException;
 import de.tuhh.vs.samples.common.db.FlatDB;
-import de.tuhh.vs.Booking;
 
 public abstract class Handler {
 	
+	/**
+	 * 
+	 * @param 	dbDirectory	The path to the database directory
+	 * @return	A handler function that closures around the database and can be passed to the server
+	 * @throws	DBException	Thrown
+	 */
 	public static final BiConsumer<Message, Consumer<Message>> getHandler(String dbDirectory) throws DBException {
 
 		final FlatDB<Booking> db = new FlatDB<Booking>(dbDirectory);
 		
+		/**
+		 * @param	request		Message from the client
+		 * @param	response	Consumer of Message that can be called once to respond to the request
+		 */
 		return (request, response) -> {
 
 			try {
