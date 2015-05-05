@@ -2,12 +2,14 @@ package de.tuhh.vs;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 
 public class Message {
 
 	public final static byte headerLength = 12;
 	public final static byte version = 0x01;
 	public static final ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+	public static Charset charset = Charset.forName("UTF-8");
 	
 	public MessageType type;
 	public ByteBuffer body = null;
@@ -24,17 +26,15 @@ public class Message {
 	}
 	/**
 	 * Message Constructor
-	 * Creates a message from an Exception
-	 * @param e
+	 * Creates a message of type ErrorCustom and copies e.getMessage() into the body, if any
+	 * @param e a Throwable
 	 */
 	Message(Throwable e) {
 		this.type = MessageType.ErrorCustom;
 		if (e.getMessage() != null) {
-			ByteBuffer buffer = ByteBuffer.allocate(e.getMessage().length() * 2);
-			for (char c :e.getMessage().toCharArray()) {
-				buffer.putChar(c);
-			}
-			this.body = buffer;
+			byte[] bytes = e.getMessage().getBytes(Message.charset);
+			this.body = ByteBuffer.allocate(bytes.length);
+			this.body.put(bytes);
 		}
 	}
 	

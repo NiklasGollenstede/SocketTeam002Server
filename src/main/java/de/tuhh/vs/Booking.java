@@ -1,7 +1,6 @@
 package de.tuhh.vs;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 import de.tuhh.vs.Message.MessageType;
@@ -10,8 +9,7 @@ import de.tuhh.vs.samples.common.db.PersistentObject;
 
 public class Booking extends PersistentObject {
 	private static final long serialVersionUID = 158803217403953213L;
-	private static Charset charset = Charset.forName("UTF-8");
-	private static byte[] spaces = new String("\0\0\0\0\0\0\0\0"/*8*/).getBytes(charset);
+	private static byte[] spaces = new String("\0\0\0\0\0\0\0\0"/*8*/).getBytes(Message.charset);
 
 	private int id;
 	private byte[] purpose;
@@ -54,7 +52,7 @@ public class Booking extends PersistentObject {
 	 */
 	public Booking(int id, String purpose, double amount, long timestamp) {
 		this.id = id;
-		byte[] chars = purpose.getBytes(charset);
+		byte[] chars = purpose.getBytes(Message.charset);
 		this.purpose = new byte[chars.length + (8 * (chars.length % 8 == 0 ? 0 : 1) - (chars.length % 8))];
 		System.arraycopy(chars, 0, this.purpose, 0, chars.length);
 		System.arraycopy(Booking.spaces, 0, this.purpose, chars.length, this.purpose.length - chars.length);
@@ -101,7 +99,6 @@ public class Booking extends PersistentObject {
 		buffer.putLong(this.timestamp);
 	}
 
-	// ^= (this, that) -> Booking[@@members].every(member -> this[member].equals(that[member]))
 	/**
 	 * Checks whether this booking equals another passed booking in the sense
 	 * of having the same 'id', 'purpose', 'amount' and 'timestamp'
@@ -115,7 +112,6 @@ public class Booking extends PersistentObject {
 			&& this.timestamp == that.timestamp;
 	}
 
-	// PersistentObject
 	/**
 	 * Sets the booking-id to the passed value
 	 * @param	key		The new value for the id
@@ -136,7 +132,7 @@ public class Booking extends PersistentObject {
 	public String toString() {
 		return "Booking{ "
 				+"id: "+ this.id +", "
-				+"purpose: \""+ new String(this.purpose, charset) +"\"(" + this.purpose.length +"), "
+				+"purpose: \""+ new String(this.purpose, Message.charset) +"\"(" + this.purpose.length +"), "
 				+"amount: "+ this.amount +", "
 				+"timestamp: "+ this.timestamp +", "
 			+"}";

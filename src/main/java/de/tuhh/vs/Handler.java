@@ -28,7 +28,7 @@ public abstract class Handler {
 		return (request, response) -> {
 
 			try {
-				switch(request.type) {
+				switch (request.type) {
 					case ErrorCustom:
 					case InvalidProtocolVersion:
 					case InvalidPacketId:

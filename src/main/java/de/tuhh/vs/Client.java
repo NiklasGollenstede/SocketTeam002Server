@@ -17,8 +17,6 @@ import java.util.concurrent.Future;
 import de.tuhh.vs.Message.MessageType;
 import de.tuhh.vs.Message.ProtocolError;
 
-
-
 public class Client implements AutoCloseable {
 	
 	private static short messageCounter = 0;

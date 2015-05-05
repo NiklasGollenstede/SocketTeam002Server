@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.Vector;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
@@ -21,9 +20,9 @@ public class Server implements AutoCloseable {
 	
 	private Thread thread;
 	private ServerSocket socket;
-	private CompletableFuture<Exception> done;
-	private BiConsumer<Message, Consumer<Message>> handler;
-	private Vector<Socket> clients;
+	private final CompletableFuture<Object> done;
+	private final BiConsumer<Message, Consumer<Message>> handler;
+	private final Vector<Socket> clients;
 	
 	
 	/**
@@ -127,7 +126,7 @@ public class Server implements AutoCloseable {
 				}
 				
 				System.out.println("Server recieved "+ messageId +": "+ type +":\n"+
-						"\t("+ body.array().length +")"+ App.bytesToHex(body.array()));
+						(body.array().length != 0 ? "\t("+ body.array().length +")"+ App.bytesToHex(body.array()) : "\t<no body>"));
 
 				// send response asynchronously
 				CompletableFuture<Object> resolved = new CompletableFuture<Object>();
@@ -140,7 +139,7 @@ public class Server implements AutoCloseable {
 						}
 						this.sendResponse(out, messageId, message);
 						resolved.complete(null);
-					} catch (Exception e) {
+					} catch (Throwable e) {
 						System.out.println("Server failed to respond to packet "+ messageId +": "+ e.getMessage());
 					}
 				});
@@ -163,7 +162,7 @@ public class Server implements AutoCloseable {
 	 */
 	public Server(int port, BiConsumer<Message, Consumer<Message>> handler) throws InterruptedException {
 		this.handler = handler;
-		this.done = new CompletableFuture<Exception>();
+		this.done = new CompletableFuture<Object>();
 		this.clients = new Vector<Socket>();
 		CompletableFuture<Object> wait = new CompletableFuture<Object>();
 		this.thread = new Thread(() -> {
@@ -179,7 +178,7 @@ public class Server implements AutoCloseable {
 						try {
 							this.handleClient(client);
 						} catch (EOFException | SocketException e) {
-						} catch (Exception e) {
+						} catch (Throwable e) {
 							e.printStackTrace();
 						} finally {
 							System.out.println("Server client disconnedted");
@@ -189,14 +188,15 @@ public class Server implements AutoCloseable {
 					this.clients.add(client);
 					thread.start();
 				} while (!Thread.currentThread().isInterrupted());
-			} catch (Exception e) {
-				this.done.complete(e);
+			} catch (SocketException e) {
+			} catch (Throwable e) {
+				this.done.completeExceptionally(e);
 				wait.completeExceptionally(e);
 				this.close();
 			} finally {
 				this.socket = null;
-				this.done.cancel(false);
-				wait.cancel(false);
+				this.done.complete(null);
+				wait.completeExceptionally(new RuntimeException("Unknown server error"));
 				System.out.println("Server exit");
 			}
         });
@@ -234,7 +234,7 @@ public class Server implements AutoCloseable {
 			throw new RuntimeException(e +": "+ e.getMessage(), e);
 		}
 		if (this.thread != null) { this.thread.interrupt(); }
-		this.done.cancel(false);
+		this.done.complete(null);
 		this.thread =  null;
 	}
 	
@@ -243,11 +243,7 @@ public class Server implements AutoCloseable {
 	 * @throws	Exception	Thrown if the server thread threw
 	 */
 	public void block() throws Exception {
-		try {
-			throw this.done.get();
-		} catch (CancellationException | ExecutionException e) {
-			return;
-		}
+		this.done.get();
 	}
 	
 	/**
@@ -263,7 +259,7 @@ public class Server implements AutoCloseable {
 		try (
 			Server server = new Server(port, Handler.getHandler(databaseDirectory));
 		) {
-			System.out.println("Server running, press Ctrl+C to quit");
+			System.out.println("Server running at port"+ port +", press Ctrl+C to quit");
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				System.out.println("Main quit server");
 				server.close();
